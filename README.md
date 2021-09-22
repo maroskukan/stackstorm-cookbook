@@ -6,6 +6,7 @@
   - [Architecture](#architecture)
   - [Installation](#installation)
     - [One-line Install](#one-line-install)
+  - [Environment Setup](#environment-setup)
 
 ## Introduction
 
@@ -187,3 +188,44 @@ grep -A2 system_user /etc/st2/st2.conf
 user = stanley
 ssh_key_file = /home/stanley/.ssh/stanley_rsa
 ```
+
+## Environment Setup
+
+To execute actions on remote hosts, StackStorm uses SSH connection. It is recommended to use password-less authentication using SSH keys.
+
+One way to setup password-less authentication is to generate public key (if not available already) for `stanley` user on StackStorm Engine. And then create a `stanley` user on each managed node and copy the public key to `authorized_keys` file on each managed node. [documentation](https://docs.stackstorm.com/install/config/config.html#configure-ssh).
+
+
+Start by creating a RSA key pair on StackStorm host if it is not already available.
+
+```bash
+sudo su stanley
+ssh-keygen -f /home/stanley/.ssh/stanley_rsa -P ""
+```
+
+Next, on each managed system, create new user, update authorized_keys file and update sudoers.
+
+```bash
+useradd stanley
+mkdir -p /home/stanley/.ssh
+chmod 0700 /home/stanley/.ssh
+
+cat <<EOF > /home/stanley/.ssh/authorized_keys
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDsMdrhVmDHIdfEDQvXDZCLbaY3e1E/wPz4q8s+XZAgg94aWK6i4HAWlT9jfxaCQIOAXWnIkYVrn5sgAbutCEPYE2uS0shymB4S1gO0YYIxuSP9OOMSR+zMA1SeYvPU4QfSEtYeYG9iMlwNmzsyq48Td40SMvdBMBOcMn9KyxW+IpPmbuXyk+fs//ulXlWEH744BoUzqz4jTzGR7yglplTL7QTxdxLfaAGXRyCkUUBK6x7qACXobim0YVBFk35/dIjW4gVPKvZhrBehhzBCTWSvCPNdWXGQQm4OQzExNhPndrY0+dKuhXTRemwn9bn3BEGZauLY7DDcWPxAiy45r9WeqkBF9n9SKM5AVjBP8LxzfHTHNNvDLh8eoUOlaAaRCQflEQWN5H0r4HNhcoWuVx7RtUNzFjMvnGUekhADIEdVjquOgSIo0TFyk+6mNUnujGjO283eY1Ba7zRdLlNU8fvwJgjZYb4btTwI4lyBlFHgMqI9eu1JcDCT5SNABNSpu88= root@stackstorm
+EOF
+
+chmod 0600 /home/stanley/.ssh/authorized_keys
+chown -R stanley:stanley /home/stanley
+echo "stanley    ALL=(ALL)       NOPASSWD: SETENV: ALL" >> /etc/sudoers.d/st2
+
+sudo sed -i -r "s/^Defaults\s+\+requiretty/# Defaults +requiretty/g" /etc/sudoers
+```
+
+Finally, verify key-based authentication and sudo privileges from StackStorm host.
+
+```bash
+# ssh should not require a password since the key is already provided
+ssh -i /home/stanley/.ssh/stanley_rsa stanley@host.example.com "sudo id"
+uid=0(root) gid=0(root) groups=0(root)
+```
+
