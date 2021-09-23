@@ -7,6 +7,13 @@
   - [Installation](#installation)
     - [One-line Install](#one-line-install)
   - [Environment Setup](#environment-setup)
+  - [Basic Configuration](#basic-configuration)
+    - [Login Methods](#login-methods)
+    - [User Management](#user-management)
+  - [Packs](#packs)
+    - [List packs](#list-packs)
+    - [Install and Uninstall packs](#install-and-uninstall-packs)
+    - [Pack information](#pack-information)
 
 ## Introduction
 
@@ -167,6 +174,37 @@ LISTEN     0          4096                       *:epmd                         
 LISTEN     0          128                     [::]:ssh                        [::]:* 
 ```
 
+To verify st2 component status use the `st2ctl status` command:
+
+```bash
+st2ctl status
+##### st2 components status #####
+st2actionrunner PID: 15955
+st2actionrunner PID: 15957
+st2actionrunner PID: 15959
+st2actionrunner PID: 15961
+st2actionrunner PID: 15963
+st2actionrunner PID: 15965
+st2actionrunner PID: 15967
+st2actionrunner PID: 15969
+st2actionrunner PID: 15971
+st2actionrunner PID: 15973
+st2api PID: 15881
+st2api PID: 15892
+st2stream PID: 15830
+st2stream PID: 15874
+st2auth PID: 15775
+st2auth PID: 15802
+st2garbagecollector PID: 14548
+st2notifier PID: 14549
+st2rulesengine PID: 14550
+st2sensorcontainer PID: 15898
+st2chatops is not running.
+st2timersengine PID: 14553
+st2workflowengine PID: 15909
+st2scheduler PID: 14552
+```
+
 Some important paths and files to remeber are:
 - `/opt/stackstorm`
 - `/etc/st2`
@@ -188,6 +226,9 @@ grep -A2 system_user /etc/st2/st2.conf
 user = stanley
 ssh_key_file = /home/stanley/.ssh/stanley_rsa
 ```
+
+When you modify the st2.conf file you need to restart the service with `st2ctl restart` command to apply the new configuration.
+
 
 ## Environment Setup
 
@@ -229,3 +270,267 @@ ssh -i /home/stanley/.ssh/stanley_rsa stanley@host.example.com "sudo id"
 uid=0(root) gid=0(root) groups=0(root)
 ```
 
+## Basic Configuration
+
+ST2 provides number of CLI commands for managing the instance. To get full list of them, just use `st2` command with tab completion and you will get the following result back.
+
+```bash
+st2                                st2-generate-symmetric-crypto-key  st2-self-check
+st2-apply-rbac-definitions         st2-register-content               st2-track-result
+st2-bootstrap-rmq                  st2-rule-tester                    st2-trigger-refire
+st2ctl                             st2-run-pack-tests                 st2-validate-pack-config
+```
+
+From this list, the most used ones are `st2` and `st2ctl`.
+
+The `st2ctl` is used for StackStorm administration. For example to start, stop, restart service or reload a component. This is required when you change the configuration.
+
+The `st2` is used to login and execute automation tasks
+
+### Login Methods
+
+THere are two primary ways how to login into StackStorm:
+- Web UI using https://<st2-ip-address>/
+- CLI `st2 login st2admin`
+
+```bash
+st2 login st2admin
+Password:
+Logged in as st2admin
+
+Note: You didn't use --write-password option so the password hasn't been stored in the client config and you will need to login again in 24 hours when the auth token expires.
+As an alternative, you can run st2 login command with the "--write-password" flag, but keep it mind this will cause it to store the password in plain-text in the client config file (~/.st2/config).
+```
+
+When you login `.st2` directory will be created. It will contain the st2 user configuration with the authentication token.
+
+```bash
+ls -al .st2
+-rw-r--r-- 1 vagrant vagrant   35 Sep 23 12:56 config
+-rw-rw---- 1 vagrant vagrant   77 Sep 23 12:56 token-st2admin
+```
+
+### User Management
+
+The default admin user `st2admin` credentials are stored in `/etc/st2/htpasswd` file.
+
+```bash
+ls -la /etc/st2/htpasswd
+-rw------- 1 st2 st2 47 Sep 22 11:41 /etc/st2/htpasswd
+```
+
+As you can see this file is owned by `st2` service account with nologin. In order to update this password, login as `root` user and change the password.
+
+```bash
+sudo su
+htpasswd /etc/st2/htpasswd st2admin
+New password:
+Re-type new password:
+Updating password for user st2admin
+```
+
+## Packs
+
+As mentioned in the [Architecture](#architecture) section a `pack` is a group of integration and automation tasks.
+
+Imagine that you need to automate a docker implementation. You need to define tasks which you want to automate such as:
+
+- Status of Docker
+- Start Docker
+- Stop Docker
+- Restart Docker
+- Clean up /var/log
+
+You can aggregate the above tasks into `Actions` and execute them manuall or based on events such as:
+
+- Monitor the Status of Docker (if down start it)
+- Monitor the disk space (if low clean up logs)
+
+You can classify these two monitor tasks as `Sensors` as they are monitoring the managed hosts.
+
+Finally, you can implement additional logic based on conditions by using `workflows`.
+
+- Start Docker if it is not running
+- Stop Docker if it is running
+
+In summary a pack may contain the following folders and files.
+
+- actions
+- workflows
+- sensors
+- rules
+- pack.yml
+
+### List packs
+
+StackStorm contains some default packs such as:
+
+```bash
+ls -l /opt/stackstorm/packs/
+total 24
+drwxrwxr-x 5 root st2packs 4096 Sep 22 11:40 chatops
+drwxrwxr-x 5 root st2packs 4096 Sep 22 11:40 core
+drwxrwxr-x 5 root st2packs 4096 Sep 22 11:40 default
+drwxrwxr-x 5 root st2packs 4096 Sep 22 11:40 linux
+drwxrwxr-x 5 root st2packs 4096 Sep 22 11:40 packs
+drwxrwxr-x 8 root st2packs 4096 Sep 22 11:42 st2
+
+st2 pack list
++---------+---------+-----------------------------+---------+------------------+
+| ref     | name    | description                 | version | author           |
++---------+---------+-----------------------------+---------+------------------+
+| chatops | chatops | ChatOps integration pack    | 3.5.0   | StackStorm, Inc. |
+| core    | core    | Basic core actions.         | 3.5.0   | StackStorm, Inc. |
+| default | default | Default pack where all      | 3.5.0   | StackStorm, Inc. |
+|         |         | resources created using the |         |                  |
+|         |         | API with no pack specified  |         |                  |
+|         |         | get saved.                  |         |                  |
+| linux   | linux   | Generic Linux actions       | 3.5.0   | StackStorm, Inc. |
+| packs   | packs   | Pack management             | 3.5.0   | StackStorm, Inc. |
+|         |         | functionality.              |         |                  |
+| st2     | st2     | StackStorm utility actions  | 2.0.1   | StackStorm, Inc. |
+|         |         | and aliases                 |         |                  |
++---------+---------+-----------------------------+---------+------------------+
+```
+
+By default output is formatted as table, you have option to view it as json or yaml with `--json` or `--yaml` arguments.
+
+### Install and Uninstall packs
+
+To install a pack.
+
+```bash
+st2 pack search aws
++-----------+------------------------------------+---------+------------------+
+| name      | description                        | version | author           |
++-----------+------------------------------------+---------+------------------+
+| aws       | st2 content pack containing Amazon | 2.0.1   | StackStorm, Inc. |
+|           | Web Services integrations.         |         |                  |
+| libcloud  | st2 content pack containing        | 0.6.0   | StackStorm, Inc. |
+|           | libcloud integrations              |         |                  |
+| aws_boto3 | AWS actions using boto3            | 1.0.0   | StackStorm, Inc. |
+| aws_s3    | AWS S3-specific actions            | 2.0.3   | StackStorm, Inc. |
++-----------+------------------------------------+---------+------------------+
+
+st2 pack install aws
+For the "aws" pack, the following content will be registered:
+
+actions   |  3581
+rules     |  0
+sensors   |  2
+aliases   |  3
+triggers  |  0
+
+Installation may take a while for packs with many items.
+
+        [ succeeded ] init_task
+        [ succeeded ] download_pack
+        [ succeeded ] make_a_prerun
+        [ succeeded ] get_pack_dependencies
+        [ succeeded ] check_dependency_and_conflict_list
+        [ succeeded ] install_pack_requirements
+        [ succeeded ] get_pack_warnings
+        [ succeeded ] register_pack
+
++-------------+--------------------------------------------------------------+
+| Property    | Value                                                        |
++-------------+--------------------------------------------------------------+
+| ref         | aws                                                          |
+| name        | aws                                                          |
+| description | st2 content pack containing Amazon Web Services              |
+|             | integrations.                                                |
+| version     | 2.0.1                                                        |
+| author      | StackStorm, Inc.                                             |
++-------------+--------------------------------------------------------------+
+```
+
+To uninstall a pack.
+
+```bash
+st2 pack remove aws
+
+        [ succeeded ] unregister packs
+        [ succeeded ] delete packs
+
++-------------+--------------------------------------------------------------+
+| Property    | Value                                                        |
++-------------+--------------------------------------------------------------+
+| ref         | aws                                                          |
+| name        | aws                                                          |
+| description | st2 content pack containing Amazon Web Services              |
+|             | integrations.                                                |
+| version     | 2.0.1                                                        |
+| author      | StackStorm, Inc.                                             |
++-------------+--------------------------------------------------------------+
+```
+
+
+### Pack information
+
+Information about an installed pack.
+
+```bash
+st2 pack get aws
++-------------+--------------------------------------------------------------+
+| Property    | Value                                                        |
++-------------+--------------------------------------------------------------+
+| name        | aws                                                          |
+| version     | 2.0.1                                                        |
+| author      | StackStorm, Inc.                                             |
+| email       | info@stackstorm.com                                          |
+| keywords    | [                                                            |
+|             |     "aws",                                                   |
+|             |     "amazon web services",                                   |
+|             |     "amazon",                                                |
+|             |     "ec2",                                                   |
+|             |     "sqs",                                                   |
+|             |     "sns",                                                   |
+|             |     "route53",                                               |
+|             |     "cloud",                                                 |
+|             |     "iam",                                                   |
+|             |     "vpc",                                                   |
+|             |     "s3",                                                    |
+|             |     "CloudFormation",                                        |
+|             |     "RDS",                                                   |
+|             |     "SQS",                                                   |
+|             |     "lambda",                                                |
+|             |     "kinesis"                                                |
+|             | ]                                                            |
+| description | st2 content pack containing Amazon Web Services              |
+|             | integrations.                                                |
++-------------+--------------------------------------------------------------+
+```
+
+Information about an installed or available pack at exchange.
+
+```bash
+st2 pack show terraform
++-----------------+-------------------------------------------------------------+
+| Property        | Value                                                       |
++-----------------+-------------------------------------------------------------+
+| name            | terraform                                                   |
+| description     | Terraform integrations                                      |
+| author          | Martez Reed                                                 |
+| content         | {                                                           |
+|                 |     "actions": {                                            |
+|                 |         "count": 13,                                        |
+|                 |         "resources": [                                      |
+|                 |             "apply",                                        |
+|                 |             "create_workspace",                             |
+|                 |             "delete_workspace",                             |
+|                 |             "destroy",                                      |
+|                 |             "get_version",                                  |
+|                 |             "import_object",                                |
+|                 |             "init",                                         |
+|                 |             "list_workspaces",                              |
+|                 |             "output",                                       |
+|                 |             "pipeline",                                     |
+|                 |             "plan",                                         |
+|                 |             "select_workspace",                             |
+|                 |             "show"                                          |
+|                 |         ]                                                   |
+|                 |     },                                                      |
+...
+[ Output omitted  ]
+...
+```
