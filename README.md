@@ -14,6 +14,9 @@
     - [List packs](#list-packs)
     - [Install and Uninstall packs](#install-and-uninstall-packs)
     - [Pack information](#pack-information)
+  - [Actions](#actions)
+    - [List actions](#list-actions)
+    - [Execute actions](#execute-actions)
 
 ## Introduction
 
@@ -533,4 +536,110 @@ st2 pack show terraform
 ...
 [ Output omitted  ]
 ...
+```
+
+
+## Actions
+
+Actions are pieces of code or script that can perform automation. They can be written in any programming language. 
+
+Usually actions are part of a pack, but there may be cases that they are deployed without pack, therefore they will be part of `default` pack.
+
+### List actions
+
+In order to list available actions use the `st2 action list` command. As you can see each action has a prefix of pack name and short description.
+
+```bash
+st2 action list
++---------------------------------+---------+------------------------------------------------+
+| ref                             | pack    | description                                    |
++---------------------------------+---------+------------------------------------------------+
+| chatops.format_execution_result | chatops | Format an execution result for chatops         |
+| chatops.match                   | chatops | Match a string to an action alias              |
+| chatops.match_and_execute       | chatops | Execute a chatops string to an action alias    |
+| chatops.post_message            | chatops | Post a message to stream for chatops           |
+| chatops.post_result             | chatops | Post an execution result to stream for chatops |
+| chatops.run                     | chatops | Match a text chatops command, execute it and   |
+|                                 |         | post the result                                |
+| core.announcement               | core    | Action that broadcasts the announcement to all |
+|                                 |         | stream consumers.                              |
+| core.ask                        | core    | Action for initiating an Inquiry (usually in a |
+...
+[ Output omitted ]
+...
+```
+
+To get more information about a particular action, use the `get` argument. This is useful for retrieving the required parameters.
+
+```bash
+st2 action get core.echo
++---------------+--------------------------------------------------------------+
+| Property      | Value                                                        |
++---------------+--------------------------------------------------------------+
+| id            | 614b1676586f7adc0a29e849                                     |
+| uid           | action:core:echo                                             |
+| ref           | core.echo                                                    |
+| pack          | core                                                         |
+| name          | echo                                                         |
+| description   | Action that executes the Linux echo command on the           |
+|               | localhost.                                                   |
+| enabled       | True                                                         |
+| entry_point   |                                                              |
+| runner_type   | local-shell-cmd                                              |
+| parameters    | {                                                            |
+|               |     "message": {                                             |
+|               |         "description": "The message that the command will    |
+|               | echo.",                                                      |
+|               |         "type": "string",                                    |
+|               |         "required": true                                     |
+|               |     },                                                       |
+|               |     "cmd": {                                                 |
+|               |         "description": "Arbitrary Linux command to be        |
+|               | executed on the local host.",                                |
+|               |         "required": true,                                    |
+|               |         "type": "string",                                    |
+|               |         "default": "echo "{{message}}"",                     |
+|               |         "immutable": true                                    |
+|               |     },                                                       |
+|               |     "kwarg_op": {                                            |
+|               |         "immutable": true                                    |
+|               |     },                                                       |
+|               |     "sudo": {                                                |
+|               |         "default": false,                                    |
+|               |         "immutable": true                                    |
+|               |     },                                                       |
+|               |     "sudo_password": {                                       |
+|               |         "immutable": true                                    |
+|               |     }                                                        |
+|               | }                                                            |
+| metadata_file | actions/echo.yaml                                            |
+| notify        |                                                              |
+| output_schema |                                                              |
+| tags          |                                                              |
++---------------+--------------------------------------------------------------+
+```
+
+### Execute actions
+
+In order to execute action manually, you can use Web UI Actions Tab. Select an action, fill mandatory parameters and hit Run.
+
+You can also execute action using CLI using `st2`
+
+```bash
+st2 run core.local cmd="uptime"
+.
+id: 614c973618f0dd6e8c03e07b
+action.ref: core.local
+context.user: st2admin
+parameters:
+  cmd: uptime
+status: succeeded
+start_timestamp: Thu, 23 Sep 2021 15:03:18 UTC
+end_timestamp: Thu, 23 Sep 2021 15:03:18 UTC
+result:
+  failed: false
+  return_code: 0
+  stderr: ''
+  stdout: ' 15:03:18 up 11:07,  1 user,  load average: 0.17, 0.13, 0.10'
+  succeeded: true
 ```
