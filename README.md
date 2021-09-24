@@ -17,6 +17,10 @@
   - [Actions](#actions)
     - [List actions](#list-actions)
     - [Execute actions](#execute-actions)
+      - [Web UI](#web-ui)
+      - [CLI](#cli)
+      - [Rest API](#rest-api)
+    - [List execution](#list-execution)
 
 ## Introduction
 
@@ -29,6 +33,7 @@ There is also a commercial version of StackStorm called Extreme Workflow Compose
 
 - [StackStorm Documentation](https://docs.stackstorm.com/index.html)
 - [StackStorm Exchange](https://exchange.stackstorm.org/)
+- [StackStorm API Reference](https://api.stackstorm.com/)
 
 
 ## Architecture
@@ -334,7 +339,7 @@ Updating password for user st2admin
 
 ## Packs
 
-As mentioned in the [Architecture](#architecture) section a `pack` is a group of integration and automation tasks.
+As mentioned in the [Architecture](#architecture) section a `pack` is a group of integration and automation tasks that are related to some service or infrastructure provider.
 
 Imagine that you need to automate a docker implementation. You need to define tasks which you want to automate such as:
 
@@ -621,25 +626,199 @@ st2 action get core.echo
 
 ### Execute actions
 
-In order to execute action manually, you can use Web UI Actions Tab. Select an action, fill mandatory parameters and hit Run.
+In order to execute action manually, you can use the follwing methods:
+- Web UI 
+- CLI
+- API
 
-You can also execute action using CLI using `st2`
+#### Web UI
+
+Executing actions from Web UI is easy. Just navigate to **Actions** page, expand the required pack, select and action. Fill out required parameters and hit **Run**.
+
+
+#### CLI
+
+You can also execute action using CLI using `st2` with `action execute` or `run` arguments as shown in examples below which executes command on local server.
 
 ```bash
-st2 run core.local cmd="uptime"
-.
-id: 614c973618f0dd6e8c03e07b
+#
+# Execute an action
+#
+st2 action execute core.local cmd="st2 --version"
+To get the results, execute:
+ st2 execution get 614d8b87f843af4f37850851
+
+To view output in real-time, execute:
+ st2 execution tail 614d8b87f843af4f37850851
+
+#
+# View result from execution
+#
+st2 execution get 614d8b87f843af4f37850851
+id: 614d8b87f843af4f37850851
 action.ref: core.local
 context.user: st2admin
 parameters:
-  cmd: uptime
-status: succeeded
-start_timestamp: Thu, 23 Sep 2021 15:03:18 UTC
-end_timestamp: Thu, 23 Sep 2021 15:03:18 UTC
+  cmd: st2 --version
+status: succeeded (0s elapsed)
+start_timestamp: Fri, 24 Sep 2021 08:25:43 UTC
+end_timestamp: Fri, 24 Sep 2021 08:25:43 UTC
+log:
+  - status: requested
+    timestamp: '2021-09-24T08:25:43.409000Z'
+  - status: scheduled
+    timestamp: '2021-09-24T08:25:43.538000Z'
+  - status: running
+    timestamp: '2021-09-24T08:25:43.569000Z'
+  - status: succeeded
+    timestamp: '2021-09-24T08:25:43.846000Z'
 result:
   failed: false
   return_code: 0
   stderr: ''
-  stdout: ' 15:03:18 up 11:07,  1 user,  load average: 0.17, 0.13, 0.10'
+  stdout: st2 3.5.0, on Python 3.8.10
+  succeeded: true 
+```
+
+This is useful when you have long running executions. You can simulate this using `sleep` utility.
+
+```bash
+st2 action execute core.local cmd="sleep 30"
+To get the results, execute:
+ st2 execution get 614d8f3cf843af4f37850857
+
+To view output in real-time, execute:
+ st2 execution tail 614d8f3cf843af4f37850857
+
+#
+# The action is still running
+#
+st2 execution get 614d8f3cf843af4f37850857
+id: 614d8f3cf843af4f37850857
+action.ref: core.local
+context.user: st2admin
+parameters:
+  cmd: sleep 30
+status: running (4s elapsed)
+start_timestamp: Fri, 24 Sep 2021 08:41:32 UTC
+end_timestamp:
+log:
+  - status: requested
+    timestamp: '2021-09-24T08:41:32.023000Z'
+  - status: scheduled
+    timestamp: '2021-09-24T08:41:32.133000Z'
+  - status: running
+    timestamp: '2021-09-24T08:41:32.176000Z'
+result: None 
+```
+
+```bash
+#
+# Execute an action
+#
+st2 run core.local cmd="st2 --version"
+.
+id: 614d8bacf843af4f37850854
+action.ref: core.local
+context.user: st2admin
+parameters:
+  cmd: st2 --version
+status: succeeded
+start_timestamp: Fri, 24 Sep 2021 08:26:20 UTC
+end_timestamp: Fri, 24 Sep 2021 08:26:21 UTC
+result:
+  failed: false
+  return_code: 0
+  stderr: ''
+  stdout: st2 3.5.0, on Python 3.8.10
   succeeded: true
 ```
+
+In some case a sudo privilege is required in order to execute a command. Observe the difference between these two outputs.
+
+```
+st2 run core.local cmd='id'
+.
+id: 614d92fbf843af4f37850872
+action.ref: core.local
+context.user: st2admin
+parameters:
+  cmd: id
+status: succeeded
+start_timestamp: Fri, 24 Sep 2021 08:57:31 UTC
+end_timestamp: Fri, 24 Sep 2021 08:57:31 UTC
+result:
+  failed: false
+  return_code: 0
+  stderr: ''
+  stdout: uid=1001(stanley) gid=1001(stanley) groups=1001(stanley)
+  succeeded: true
+
+
+st2 run core.local_sudo cmd='id'
+.
+id: 614d92daf843af4f3785086f
+action.ref: core.local_sudo
+context.user: st2admin
+parameters:
+  cmd: id
+status: succeeded
+start_timestamp: Fri, 24 Sep 2021 08:56:58 UTC
+end_timestamp: Fri, 24 Sep 2021 08:56:58 UTC
+result:
+  failed: false
+  return_code: 0
+  stderr: ''
+  stdout: uid=0(root) gid=0(root) groups=0(root)
+  succeeded: true
+```
+
+#### Rest API
+
+To execute actions using REST API available at `https://<stackstorm-host>:443`. The endpoints are available at `/api/v1/<service_to_work>`. Before you can interact with these endpoints you need to authenticate using either `St2-Api-Key` or `X-Auth-Token`.
+
+To genearate an API key, you need to execute the following command from StackStorm Engine.
+
+```bash
+st2 apikey create -k -m '{"used_by": "my integration"}'
+OKO04N2VkOWU5ZlMzdhMTNMWYyNGUzODRjTM0ZDVmmQxMzdZmUyMzZlMmVjYZjN2VkYzNiZmjN2VkYzNiZmUys
+```
+
+To execute action from remote host using API.
+
+```bash
+curl -k -X POST http://<STACKSTORM-HOST>:443/api/v1/executions \
+     -H "St2-Api-Key:<API-KEY-VALUE>" \
+     -H "content-type:application/json" \
+     --data-binary '{"action": "core.local", "parameters": {"cmd": "uptime"}, "user": null}'
+
+{"action":{"tags":[],"uid":"action:core:local","metadata_file":"actions/local.yaml","name":"local","ref":"core.local","description":"Action that executes an arbitrary Linux command on the localhost.","enabled":true,"entry_point":"","pack":"core","runner_type":"local-shell-cmd","parameters":{"cmd":{"description":"Arbitrary Linux command to be executed on the local host.","required":true,"type":"string"},"sudo":{"immutable":true}},"output_schema":{},"notify":{},"id":"614b1677586f7adc0a29e84d"},"runner":{"name":"local-shell-cmd","description":"A runner to execute local actions as a fixed user.","uid":"runner_type:local-shell-cmd","enabled":true,"runner_package":"local_runner","runner_module":"local_shell_command_runner","runner_parameters":{"cmd":{"description":"Arbitrary Linux command to be executed on the host.","type":"string"},"cwd":{"description":"Working directory where the command will be executed in","type":"string"},"env":{"description":"Environment variables which will be available to the command(e.g. key1=val1,key2=val2)","type":"object"},"kwarg_op":{"default":"--","description":"Operator to use in front of keyword args i.e. \"--\" or \"-\".","type":"string"},"sudo":{"default":false,"description":"The command will be executed with sudo.","type":"boolean"},"sudo_password":{"default":null,"description":"Sudo password. To be used when passwordless sudo is not allowed.","type":"string","secret":true,"required":false},"timeout":{"default":60,"description":"Action timeout in seconds. Action will get killed if it doesn't finish in timeout seconds.","type":"integer"}},"output_schema":{},"id":"614b166ecbde329ef4ac8eb8"},"liveaction":{"action":"core.local","action_is_workflow":false,"parameters":{"cmd":"uptime"},"callback":{},"runner_info":{},"id":"614dbe14a500afc4b5a4ab80"},"status":"requested","start_timestamp":"2021-09-24T12:01:24.013495Z","parameters":{"cmd":"uptime"},"context":{"user":"st2admin","pack":"core"},"log":[{"timestamp":"2021-09-24T12:01:24.019400Z","status":"requested"}],"web_url":"https://stackstorm/#/history/614dbe14a500afc4b5a4ab81/general","id":"614dbe14a500afc4b5a4ab81"}
+```
+
+To retrieve task execution status using execution id.
+
+```bash
+curl -k -s -X GET http://<STACKSTORM-HOST>:443/api/v1/executions/614dbe14a500afc4b5a4ab81 \
+     -H "St2-Api-Key:<API-KEY-VALUE>" \
+     -H "content-type:application/json" \
+     | jq -r '.result.stdout'
+12:01:24 up 1 day,  7:06,  1 user,  load average: 0.14, 0.16, 0.16
+```
+
+### List execution
+
+In order to retrieve the list of past executions use the `st2` command with `execution list` argument.
+
+```bash
+st2 execution list
++--------------------------+---------------+--------------+-------------------------+-----------------+---------------+
+| id                       | action.ref    | context.user | status                  | start_timestamp | end_timestamp |
++--------------------------+---------------+--------------+-------------------------+-----------------+---------------+
+| 614b168f18f0dd6e8c03e048 | core.local    | st2admin     | succeeded (1s elapsed)  | Wed, 22 Sep     | Wed, 22 Sep   |
+|                          |               |              |                         | 2021 11:42:07   | 2021 11:42:08 |
+|                          |               |              |                         | UTC             | UTC           |
+| 614b169218f0dd6e8c03e04b | core.remote   | st2admin     | succeeded (1s elapsed)  | Wed, 22 Sep     | Wed, 22 Sep   |
+|                          |               |              |                         | 2021 11:42:10   | 2021 11:42:11 |
+|                          |               |              |                         | UTC             | UTC           |
+```
+
