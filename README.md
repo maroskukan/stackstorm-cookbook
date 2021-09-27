@@ -21,6 +21,16 @@
       - [CLI](#cli)
       - [Rest API](#rest-api)
     - [List execution](#list-execution)
+  - [Pack development](#pack-development)
+    - [YAML](#yaml)
+    - [Jinja2](#jinja2)
+      - [String operations](#string-operations)
+      - [Arithmetic operations](#arithmetic-operations)
+      - [Comparison operations](#comparison-operations)
+      - [Membership operations](#membership-operations)
+      - [Define a variable in Jinja](#define-a-variable-in-jinja)
+      - [Array (List) and Map (Dictionary) operations](#array-list-and-map-dictionary-operations)
+      - [Conditional and loop operations](#conditional-and-loop-operations)
 
 ## Introduction
 
@@ -34,7 +44,7 @@ There is also a commercial version of StackStorm called Extreme Workflow Compose
 - [StackStorm Documentation](https://docs.stackstorm.com/index.html)
 - [StackStorm Exchange](https://exchange.stackstorm.org/)
 - [StackStorm API Reference](https://api.stackstorm.com/)
-
+- [Ansible Template Tester](https://ansible.sivel.net/test/)
 
 ## Architecture
 
@@ -822,3 +832,259 @@ st2 execution list
 |                          |               |              |                         | UTC             | UTC           |
 ```
 
+
+## Pack development
+
+Before developing a custom pack, there are minimum requiremnets which include knowledge of:
+- YAML
+- Jinja2
+- Shell commands and its exit status
+- Shell scripting
+- Python scripting
+- YAQL
+
+### YAML
+
+- YAML stands for 'Ain't Markup Language
+- YAML is a human-readable data serialization language
+- It is commonly used for configuration files and in applications where data is being stored or transmitted
+- Its very simple and easy to learn
+- Common applications that leverage this language is Ansible, Kubernetes, Salt and StackStorm
+- YAML files are made up of three components:
+  - Scalars (e.g. file: config)
+  - Arrays/Lists
+  - Mappings
+- Every YAML file should start with `---` and by default each YAML file can be represented as dictionary in Python
+
+### Jinja2
+
+- Jinja2 is a template engine used to produce data dynamically from data serialization language like YAML or JSON
+- You can create a template engine, where you define static and dynamic data
+- During execution the dynamic data is rendered with required login during execution (vars, conditions, loops, filters)
+- Jinja2 supports two ways to implement templates:
+  - As a file (.j2)
+  - As a data (inside a yaml file)
+- Jinja2 supports the following dilimeters:
+  - `{{ }}` - used for expressions (variables)
+  - `{% %}` - used for control statements (conditionals, loops)
+  - `{# .. #}` - used for comments
+  - `# ##` - used for line statements
+
+For example, you have a variable defined in `yaml` file as follows:
+
+```yml
+name: stackstorm is an event driven automation tool
+```
+
+To render the content of variable in j2 you would referenced it as follows.
+
+```j2
+{{ name }}
+```
+
+#### String operations
+
+You can also use number of string operations such as `upper`, `lower`, `title` using pipeline with following syntax.
+
+```j2
+{{ name | upper }}
+{{ name | lower }}
+{{ name | title }}
+```
+
+These operations are equivalent to following:
+
+```j2
+{{ name.upper() }}
+{{ name.lower() }}
+{{ name.title() }}
+```
+
+If you try to render a value for nonexisting variable, you will receive an error. You can however define a default value.
+
+```j2
+{{ license | default('Apache 2.0') }}
+```
+
+#### Arithmetic operations
+
+Jinja2 supports arithmetic operations such as additions, subtraction, multiplication, division.
+
+```yml
+---
+x: 5
+y: 10
+```
+
+```j2
+# The following statement renders as 15
+{{ x + y }}
+```
+
+#### Comparison operations
+
+```yml
+---
+x: 5
+y: 10
+```
+
+```j2
+# The following statement renders False
+{{ x == y }}
+
+# The following statement renders True
+{{ x != y}}
+```
+
+#### Membership operations
+
+```yml
+---
+x: stackstorm is an event driven automation tool
+y: tool
+mylist:
+  - 6
+  - 9
+  - 10
+l: 9
+n: 78
+```
+
+```j2
+# The following statement renders True
+{{ y in x }}
+
+# The following statement renders False
+{{ n in mylist }}
+```
+
+#### Define a variable in Jinja
+
+Use the `set` statement to define a variable in Jinja/Jinja Template.
+
+```yml
+---
+x: 5
+y: 10
+```
+
+```j2
+# Create a new variable result
+{% set result=x + y %}
+
+# Print the content of result
+{{ result }}
+```
+
+#### Array (List) and Map (Dictionary) operations
+
+Define sample arrays and maps:
+
+```yml
+---
+myfirstlist: [1, 2, 3, 7]
+mysecondlist:
+  - 1
+  - 2
+  - 3
+  - 7
+myfirstmap: {one: 1, two: 2, three: 3, seven: 7}
+mysecondmap:
+  one: 1
+  two: 2
+  three: 3
+  sevent: 7
+```
+
+
+```j2
+# The following statement renders content of myfirstlist
+# [1, 2, 3, 7]
+{{ myfirstlist }}
+
+# The following statement renders content of mysecondlist
+# [1, 2, 3, 7]
+{{ mysecondlist }}
+
+# The following statement renders first value from myfirstlist
+# 1
+{{ myfirstlist[0] }}
+
+# The following statement renders lenght of myfirstlist
+# 4
+{{ myfirstlist | length }}
+```
+
+```j2
+# The following statement renders content of myfirstmap
+# {'one': 1, 'two': 2, 'three': 3, 'seven': 7}
+{{ myfirstmap }}
+
+# The following statement renders content of mysecondmap
+# {'one': 1, 'two': 2, 'three': 3, 'seven': 7}
+{{ mysecondmap }}
+
+# The following statement renders all keys from myfirstmap
+# ['one', 'two', 'three', 'seven']
+{{ myfirstmap.keys() }}
+
+# The following statement renders all values from myfirstmap
+# [1, 2, 3, 7]
+{{ myfirstmap.values() }}
+
+# The following statement renders all items from myfirstmap
+# [('one', 1), ('two', 2), ('three', 3), ('seven', 7)]
+{{ myfirstmap.items() }}
+```
+
+#### Conditional and loop operations
+
+Syntax for simple `if` condition looks as follows:
+
+```j2
+{% if condition %}
+ block for logic
+{% endif %}
+```
+
+Syntax for simple `if-else` condition looks like follows:
+```j2
+{% if condition %}
+ block for logic-1
+{% else %}
+ block for logic-2
+{% endif %}
+```
+
+Syntax for inline `if-else` statement:
+
+```j2
+{{ "block for logic-1" if condition esle "block for logic-2" }}
+```
+
+Syntax for `if-elif-else` condition:
+
+```j2
+{% if condition1 %}
+ block for logic-1
+{% elif condition2 %}
+ block for logic-2
+{% else %}
+ block for logic-3
+{% endif %}
+```
+
+Syntax for `for loop` with list:
+
+```j2
+{% for each in mylist %}
+{% endfor %}
+```
+
+Syntax for `for loop` with dictionary items:
+
+```j2
+{% for key, value in mydict.items() %}
+{% endfor %}
+```
