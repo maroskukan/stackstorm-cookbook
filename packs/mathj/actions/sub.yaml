@@ -1,0 +1,19 @@
+---
+name: sub
+description: This is a subtraction action.
+runner_type: local-shell-cmd
+enabled: true
+entry_point: ""
+parameters:
+  num1:
+    type: integer
+    required: true
+  num2:
+    type: integer
+    required: true
+  result:
+    type: integer
+    default: "{{ num1 - num2 }}"
+  cmd:
+    type: string
+    default: "echo {{ result }}"

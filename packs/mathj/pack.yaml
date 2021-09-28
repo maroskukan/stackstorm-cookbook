@@ -1,0 +1,14 @@
+---
+ref: mathj
+name: mathj
+description: This pack is used to find the add and sub of two numbers.
+keywards:
+   - calculator
+   - add
+   - sub
+version: 3.2.0
+python_versions:
+  - "2"
+  - "3"
+author: Maros Kukan
+email: maros.kukan@example.com

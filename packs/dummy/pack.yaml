@@ -1,0 +1,16 @@
+---
+ref: dummy
+name: dummy
+description: Simple dummy pack without sensor, rule, and action
+keywords:
+    - example
+    - test
+version: 3.5.0
+python_versions:
+  - "2"
+  - "3"
+author: Maros Kukan
+email: maros.kukan@example.com
+contributors:
+  - "John Doe1 <john.doe1@gmail.com>"
+  - "John Doe2 <john.doe2@gmail.com>"

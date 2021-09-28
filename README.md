@@ -31,6 +31,9 @@
       - [Define a variable in Jinja](#define-a-variable-in-jinja)
       - [Array (List) and Map (Dictionary) operations](#array-list-and-map-dictionary-operations)
       - [Conditional and loop operations](#conditional-and-loop-operations)
+    - [Creating custom pack](#creating-custom-pack)
+      - [Folder structure](#folder-structure)
+      - [Actions](#actions-1)
 
 ## Introduction
 
@@ -45,6 +48,8 @@ There is also a commercial version of StackStorm called Extreme Workflow Compose
 - [StackStorm Exchange](https://exchange.stackstorm.org/)
 - [StackStorm API Reference](https://api.stackstorm.com/)
 - [Ansible Template Tester](https://ansible.sivel.net/test/)
+- [Create and Contribute a Pack](https://docs.stackstorm.com/reference/packs.html)
+- [Action Runners](https://docs.stackstorm.com/actions.html#action-runners)
 
 ## Architecture
 
@@ -1088,3 +1093,354 @@ Syntax for `for loop` with dictionary items:
 {% for key, value in mydict.items() %}
 {% endfor %}
 ```
+
+### Creating custom pack
+
+As mentioned in [Packs](#packs) section, each pack has a predifined directory structure, such as:
+
+- pack.yml
+- actions
+  - workflows
+- sensors
+- rules
+- requirements.txt etc...
+
+#### Folder structure 
+
+Start by creating an empty pack folder `dummy`:
+
+```bash
+# Create pack folder
+mkdir -p ~/packs/dummy && cd $_
+
+# Create folder structure and required files
+mkdir actions rules sensors aliases policies
+touch pack.yaml requirements.txt
+
+# Update content of pack.yaml
+cat <<EOF >>pack.yaml
+---
+ref: dummy
+name: dummy
+description: Simple dummy pack without sensor, rule, and action
+keywords:
+    - example
+    - test
+version: 3.5.0
+python_versions:
+  - "2"
+  - "3"
+author: Maros Kukan
+email: maros.kukan@example.com
+contributors:
+  - "John Doe1 <john.doe1@gmail.com>"
+  - "John Doe2 <john.doe2@gmail.com>"
+EOF
+```
+
+Initialize git repository and install the pack.
+
+```bash
+# Initliaze git repository
+git init && git add ./* && git commit -m "Initial commit"
+
+# Install local pack
+st2 pack install file://$PWD
+
+        [ succeeded ] init_task
+        [ succeeded ] download_pack
+        [ succeeded ] make_a_prerun
+        [ succeeded ] get_pack_dependencies
+        [ succeeded ] check_dependency_and_conflict_list
+        [ succeeded ] install_pack_requirements
+        [ succeeded ] get_pack_warnings
+        [ succeeded ] register_pack
+
++-------------+----------------------------------------------------+
+| Property    | Value                                              |
++-------------+----------------------------------------------------+
+| ref         | dummy                                              |
+| name        | dummy                                              |
+| description | Simple dummy pack without sensor, rule, and action |
+| version     | 3.5.0                                              |
+| author      | Maros Kukan                                        |
++-------------+----------------------------------------------------+
+```
+
+Verify that the dummy pack is listed in available packs:
+
+```bash
+st2 pack get dummy
++-------------+----------------------------------------------------+
+| Property    | Value                                              |
++-------------+----------------------------------------------------+
+| name        | dummy                                              |
+| version     | 3.5.0                                              |
+| author      | Maros Kukan                                        |
+| email       | maros.kukan@example.com                            |
+| keywords    | [                                                  |
+|             |     "example",                                     |
+|             |     "test"                                         |
+|             | ]                                                  |
+| description | Simple dummy pack without sensor, rule, and action |
++-------------+----------------------------------------------------+
+```
+
+#### Actions
+
+Actions are used to execute code (shell script, python script, shell command) that can perform automation in our environment. The leverage action runners on backend.
+
+Action Runners are the environment to execute user-implemented actions. There are multiple action runners available in default installation, such as:
+- local-shell-cmd
+- local-shell-script
+- remote-shell-cmd
+- remote-shell-script
+- python-script
+- [...](https://docs.stackstorm.com/actions.html#available-runners)
+
+Normally, the exit code of a runner is defined by the exit code of the script or command executed. All runners return timeout exit code (-9) if the command or script did not complete its execution within the specified timeout.
+
+Actions are made up from:
+- Action Meta Data file or yaml file - mandatory
+- Script (Shell, Python, or any other) - optional
+
+Script will have our logic and meta data file will have the info about an action. Script should return valid stdout and stderr.
+
+In order to demostrate usage of actions, create a new `math` pack.
+
+```bash
+# Create pack folder
+mkdir -p ~/packs/math && cd $_
+
+# Create folder structure and required files
+mkdir actions rules sensors aliases policies
+touch pack.yaml requirements.txt
+
+# Update content of pack.yaml
+cat <<EOF >>pack.yaml
+---
+ref: math
+name: math
+description: This pack is used to find the add and sub of two numbers.
+keywords:
+    - calculator
+    - addition
+    - subtraction
+version: 3.5.0
+python_versions:
+  - "2"
+  - "3"
+author: Maros Kukan
+email: maros.kukan@example.com
+contributors:
+  - "John Doe1 <john.doe1@gmail.com>"
+  - "John Doe2 <john.doe2@gmail.com>"
+EOF
+```
+
+Next, create action metadata and script for `addition` task.
+
+```bash
+# Addition action medatada
+cat <<EOF >>./actions/add.yaml
+---
+name: add
+description: This is aan addition action.
+runner_type: local-shell-script
+enabled: true
+entry_point: "add.sh"
+parameters:
+  num1:
+    type: integer
+  num2:
+    type: integer
+EOF
+
+# Addition action script
+cat <<\EOF >>./actions/add.sh
+#!/usr/bin/env bash
+
+num1=$1
+num2=$2
+sum=$((num1+num2))
+echo "The addition of $num1 and $num2 is: $sum"
+EOF
+```
+
+Next, create action metadata nad script for `subtraction` task.
+
+```bash
+# Subtraction action medatada
+cat <<EOF >>./actions/sub.yaml
+---
+name: sub
+description: This is a subtraction action.
+runner_type: local-shell-script
+enabled: true
+entry_point: "sub.sh"
+parameters:
+  num1:
+    type: integer
+  num2:
+    type: integer
+EOF
+
+# Subtraction action script
+cat <<\EOF >>./actions/sub.sh
+#!/usr/bin/env bash
+
+num1=$1
+num2=$2
+sum=$((num1-num2))
+echo "The addition of $num1 and $num2 is: $sum"
+EOF
+```
+
+Initialize git repository and install the pack.
+
+```bash
+# Initliaze git repository
+git init && git add ./* && git commit -m "Initial commit"
+
+# Install local pack
+st2 pack install file://$PWD
+```
+
+Verify newly deployed pack.
+
+```bash
+st2 action list -p math
++----------+------+-------------------------------+
+| ref      | pack | description                   |
++----------+------+-------------------------------+
+| math.add | math | This is an addition action.   |
+| math.sub | math | This is a subtraction action. |
++----------+------+-------------------------------+
+```
+
+Every time you perform a change in your metadata or script file, you need to redeploy the pack.
+
+To run your action, invoke it with `st2 run` or `st2 action execute`.
+
+```bash
+st2 run math.add
+.
+id: 6151be08959864546745ac9c
+action.ref: math.add
+context.user: st2admin
+parameters: None
+status: succeeded
+start_timestamp: Mon, 27 Sep 2021 12:50:16 UTC
+end_timestamp: Mon, 27 Sep 2021 12:50:16 UTC
+result:
+  failed: false
+  return_code: 0
+  stderr: ''
+  stdout: 'The addition of  and  is: 0'
+  succeeded: true
+```
+
+As you can see, the action execute successfully, eventhough we did not provided any parameters. We need to update the action metadata to require `num1` and `num2` in `add.yaml`.
+
+```yml
+---
+name: add
+description: This is an addition action.
+runner_type: local-shell-script
+enabled: true
+entry_point: "add.sh"
+parameters:
+  num1:
+    type: integer
+    required: true
+  num2:
+    type: integer
+    required: true
+```
+
+Remember, when using `git` always make sure you have latest changes commited before reinstall the pack.
+
+```bash
+git add ./* && git commit -m "Add required: true for both parameters"
+st2 pack install file://$PWD
+```
+
+Now, when you run the `math.add` action without any arguments, you will receive an error.
+
+```bash
+# Running action without argument will fail
+st2 run math.add
+ERROR: 400 Client Error: Bad Request
+MESSAGE: 'num1' is a required property for url: http://127.0.0.1:9101/v1/executions
+
+# Running action with arguments
+st2 run math.add num1=5 num2=7
+.
+id: 6151c2de959864546745acab
+action.ref: math.add
+context.user: st2admin
+parameters:
+  num1: 5
+  num2: 7
+status: succeeded
+start_timestamp: Mon, 27 Sep 2021 13:10:54 UTC
+end_timestamp: Mon, 27 Sep 2021 13:10:54 UTC
+result:
+  failed: false
+  return_code: 0
+  stderr: '/opt/stackstorm/packs/math/actions/add.sh: line 5: --num2=7: expression recursion level exceeded (error token is "num2=7")'
+  stdout: 'The addition of --num2=7 and --num1=5 is: '
+  succeeded: true
+```
+
+Better, but this is still now what we want to see as result. You need to define the position of required arguments in metadata file.
+
+```yml
+---
+name: add
+description: This is an addition action.
+runner_type: local-shell-script
+enabled: true
+entry_point: "add.sh"
+parameters:
+  num1:
+    type: integer
+    required: true
+    position: 0
+  num2:
+    type: integer
+    required: true
+    position: 1
+```
+
+Commit the new change, reinstall and test the action once again.
+
+```bash
+# Commit change and reinstall the pack
+git add ./* && git commit -m "Add position for both parameters"
+st2 pack install file://$PWD
+
+# Test the additional action
+st2 run math.add num1=5 num2=10
+.
+id: 6151c4ab959864546745acb1
+action.ref: math.add
+context.user: st2admin
+parameters:
+  num1: 5
+  num2: 10
+status: succeeded
+start_timestamp: Mon, 27 Sep 2021 13:18:35 UTC
+end_timestamp: Mon, 27 Sep 2021 13:18:35 UTC
+result:
+  failed: false
+  return_code: 0
+  stderr: ''
+  stdout: 'The addition of 5 and 10 is: 15'
+  succeeded: true
+```
+
+An example pack using python is available at `packs/mathp` folder.
+An example pack using python with jinja2 tempalte is available at `packs/mathj`.
+
+
