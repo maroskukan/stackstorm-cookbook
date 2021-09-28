@@ -2,8 +2,8 @@
 name: add
 description: This is aan addition action.
 runner_type: local-shell-script
-enabled: true
 entry_point: "add.sh"
+enabled: true
 parameters:
   num1:
     type: integer

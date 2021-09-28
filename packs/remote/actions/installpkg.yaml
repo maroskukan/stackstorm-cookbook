@@ -1,0 +1,18 @@
+---
+name: installpkg
+description: This is action is used to install package of remote server(s)
+runner_type: remote-shell-script
+entry_point: "installpkg.sh"
+enabled: true
+parameters:
+  pkg:
+    type: string
+    required: true
+    position: 0
+  sudo:
+    type: boolean
+    default: true
+    immutable: true
+  timeout:
+    type: integer
+    default: 120

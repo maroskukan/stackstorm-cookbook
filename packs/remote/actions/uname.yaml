@@ -1,0 +1,11 @@
+---
+name: uname
+description: This is action is used to find the uname of remote server(s)
+runner_type: remote-shell-cmd
+entry_point: ""
+enabled: true
+parameters:
+  cmd:
+    type: string
+    default: uname
+    immutable: true

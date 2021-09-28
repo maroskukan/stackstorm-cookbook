@@ -2,8 +2,8 @@
 name: sub
 description: This is a subtraction action.
 runner_type: local-shell-cmd
-enabled: true
 entry_point: ""
+enabled: true
 parameters:
   num1:
     type: integer

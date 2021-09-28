@@ -1440,7 +1440,4 @@ result:
   succeeded: true
 ```
 
-An example pack using python is available at `packs/mathp` folder.
-An example pack using python with jinja2 tempalte is available at `packs/mathj`.
-
-
+More pack examples are available at `packs` directory.

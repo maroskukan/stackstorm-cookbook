@@ -2,8 +2,8 @@
 name: add
 description: This is an addition action.
 runner_type: python-script
-enabled: true
 entry_point: "add.py"
+enabled: true
 parameters:
   num1:
     type: integer

@@ -1,0 +1,13 @@
+---
+ref: remote
+name: remote
+description: Simple pack to work with remote servers
+keywords:
+  - uname
+  - osname
+version: 3.5.0
+python_versions:
+  - "2"
+  - "3"
+author: Maros Kukan
+email: maros.kukan@example.com
