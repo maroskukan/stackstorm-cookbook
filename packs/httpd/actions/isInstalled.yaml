@@ -1,0 +1,11 @@
+---
+name: isInstalled
+runner_type: remote-shell-cmd
+entry_point: ""
+enabled: true
+parameters:
+  cmd:
+    type: string
+    required: true
+    default: which httpd
+    immutable: true
