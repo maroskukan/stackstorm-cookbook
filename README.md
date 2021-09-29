@@ -50,6 +50,7 @@ There is also a commercial version of StackStorm called Extreme Workflow Compose
 - [Ansible Template Tester](https://ansible.sivel.net/test/)
 - [Create and Contribute a Pack](https://docs.stackstorm.com/reference/packs.html)
 - [Action Runners](https://docs.stackstorm.com/actions.html#action-runners)
+- [Curl to Request](https://curl.trillworks.com/)
 
 ## Architecture
 
