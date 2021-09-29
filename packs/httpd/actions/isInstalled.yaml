@@ -1,11 +1,7 @@
 ---
 name: isInstalled
-runner_type: remote-shell-cmd
-entry_point: ""
+description: Action to verify Apache web server
+runner_type: remote-shell-script
+entry_point: "isInstalled.sh"
 enabled: true
-parameters:
-  cmd:
-    type: string
-    required: true
-    default: which httpd
-    immutable: true
+parameters: {}

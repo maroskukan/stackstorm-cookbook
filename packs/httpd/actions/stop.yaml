@@ -1,0 +1,11 @@
+---
+name: stop
+runner_type: remote-shell-script
+entry_point: "stop.sh"
+enabled: true
+parameters:
+  sudo:
+    type: boolean
+    default: true
+    required: true
+    immutable: true
