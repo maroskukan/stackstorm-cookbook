@@ -38,6 +38,7 @@
     - [Orquesta Graph Editor](#orquesta-graph-editor)
     - [Creating workflow](#creating-workflow)
     - [Workflow Functions](#workflow-functions)
+    - [Workflow Summary](#workflow-summary)
 
 ## Introduction
 
@@ -1552,3 +1553,18 @@ outputtask1:
       stdout: Thu 30 Sep 2021 11:20:29 AM UTC
       succeeded: true
 ```
+
+### Workflow Summary
+
+- Orquesta Workflow is also an action but runner type is Orquesta
+- Therefore we have meta data file and script file
+- Writing meta data file with Orquesta runner is same as writing meta data file for other runners
+- Next Important Part is: writing a script / workflow file
+- Key points to remember for workflow file are:
+  - input, vars, publish and output are the places to define variables and parameters
+    - input section is to define variables and parametes which are in meta data file
+    - vars section is to define intermediate variables
+    - publish section is to define variables in tasks
+    - output section is to dipslay variable values
+
+

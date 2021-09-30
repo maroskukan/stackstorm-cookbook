@@ -1,0 +1,13 @@
+---
+ref: nginx
+name: nginx
+description: Simple pack to work with nginx
+keywords:
+  - nginx
+  - version
+version: 3.5.0
+python_versions:
+  - "2"
+  - "3"
+author: Maros Kukan
+email: maros.kukan@example.com
