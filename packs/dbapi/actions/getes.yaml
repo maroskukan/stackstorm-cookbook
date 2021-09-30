@@ -1,7 +1,8 @@
 ---
 name: getes
-description: Retrieves list of employees.
-runner_type: python-script
+pack: dbapi
+description: "Retrieves list of employees"
+runner_type: "python-script"
 entry_point: "getes.py"
 enabled: true
 parameters: {}

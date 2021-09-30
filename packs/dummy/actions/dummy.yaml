@@ -1,0 +1,10 @@
+---
+name: dummy
+description: dummy workflow
+enabled: true
+runner_type: orquesta
+entry_point: workflows/dummy.yaml
+parameters:
+    Name:
+      type: string
+      required: true 

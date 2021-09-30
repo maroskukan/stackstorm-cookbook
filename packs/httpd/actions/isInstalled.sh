@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-#!/usr/bin/env bash
-
 OSID=$(cat /etc/os-release | grep -w "ID" | cut -d "=" -f 2)
 OSID=${OSID%\"}
 OSID=${OSID#\"}

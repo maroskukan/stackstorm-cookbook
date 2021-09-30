@@ -34,6 +34,9 @@
     - [Creating custom pack](#creating-custom-pack)
       - [Folder structure](#folder-structure)
       - [Actions](#actions-1)
+  - [Workflows](#workflows)
+    - [Orquesta Graph Editor](#orquesta-graph-editor)
+    - [Creating workflow](#creating-workflow)
 
 ## Introduction
 
@@ -51,6 +54,8 @@ There is also a commercial version of StackStorm called Extreme Workflow Compose
 - [Create and Contribute a Pack](https://docs.stackstorm.com/reference/packs.html)
 - [Action Runners](https://docs.stackstorm.com/actions.html#action-runners)
 - [Curl to Request](https://curl.trillworks.com/)
+- [Orquesta workflow](https://docs.stackstorm.com/orquesta/index.html)
+- [Rehearsal Fork - Orquesta Graph Editor](https://github.com/maroskukan/rehearsal)
 
 ## Architecture
 
@@ -1442,3 +1447,55 @@ result:
 ```
 
 More pack examples are available at `packs` directory.
+
+
+## Workflows
+
+Workflow is a way to chain multiple actions based on your requirements and environment. It supports if, then, else logic. For example in order to orchestrate nginx service:
+
+- Start Nginx Service
+  - Task1: is nginx installed?
+  - Task2: is it already running?
+  - Task3: if not then start it
+
+StackStorm uses the Orquesta language to define a workflow.
+
+```bash
+st2 run core.remote cmd='which nginx' hosts='u1'
+..
+id: 61556e4ae010e55432fa1b40
+action.ref: core.remote
+context.user: st2admin
+parameters:
+  cmd: which nginx
+  hosts: u1
+status: failed
+start_timestamp: Thu, 30 Sep 2021 07:59:06 UTC
+end_timestamp: Thu, 30 Sep 2021 07:59:09 UTC
+result:
+  u1:
+    failed: true
+    return_code: 1
+    stderr: ''
+    stdout: ''
+    succeeded: false
+```
+
+### Orquesta Graph Editor
+
+```bash
+git clone git@github.com:maroskukan/rehearsal.git
+cd rehearsal
+git submodule init && git submodule update
+make up
+```
+
+One your browser and navigate to `http://localhost:5000/`.
+
+### Creating workflow
+
+Workflow is also an action, therefore you need to create a meta data file and a script file or workflow file under `workflow` directory.
+
+Each Workflow file consists of version, descriotion, input, vars, tasks, output.
+All variables and inputs can be retrieved anytime using ctx() function. For example
+`<% ctx(xyz) %>` or `<% ctx().xyz %>`.

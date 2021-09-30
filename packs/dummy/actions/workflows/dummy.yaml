@@ -1,0 +1,16 @@
+version: 1.0
+
+description: A dummy workflow
+
+input:
+  - Name
+
+vars:
+  - x: Hello
+
+tasks:
+  DummyTask:
+    action: core.noop
+
+output:
+  - stdout: "This is an output from <% ctx(Name) %>."
