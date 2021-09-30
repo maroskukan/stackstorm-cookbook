@@ -1,0 +1,9 @@
+---
+name: runtimeinfo
+enabled: true
+runner_type: orquesta
+entry_point: workflows/runtimeinfo.yaml
+parameters:
+  command:
+    type: string
+    required: true

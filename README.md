@@ -37,6 +37,7 @@
   - [Workflows](#workflows)
     - [Orquesta Graph Editor](#orquesta-graph-editor)
     - [Creating workflow](#creating-workflow)
+    - [Workflow Functions](#workflow-functions)
 
 ## Introduction
 
@@ -1496,6 +1497,58 @@ One your browser and navigate to `http://localhost:5000/`.
 
 Workflow is also an action, therefore you need to create a meta data file and a script file or workflow file under `workflow` directory.
 
-Each Workflow file consists of version, descriotion, input, vars, tasks, output.
-All variables and inputs can be retrieved anytime using ctx() function. For example
+Each Workflow file consists of version, description, input, vars, tasks, output.
+
+### Workflow Functions
+
+There are three runtime functions of Orquesta Workflow.
+- `ctx()`
+- `task()`
+- `result()`
+
+The `ctx()` function is used to retrieve variable value during execution. For example
 `<% ctx(xyz) %>` or `<% ctx().xyz %>`.
+
+The `task()` function is used to retrieve result from tasks. For example `<% task(ExecuteCommand) %>`.
+
+Once you run this workflow action the output will look like following:
+
+```yaml
+result:
+      end_timestamp: '2021-09-30 11:20:29.906046+00:00'
+      result:
+        failed: false
+        return_code: 0
+        stderr: ''
+        stdout: Thu 30 Sep 2021 11:20:29 AM UTC
+        succeeded: true
+      route: 0
+      start_timestamp: '2021-09-30 11:20:29.589346+00:00'
+      status: succeeded
+      task_execution_id: 61559d7d5cb2f10bec65b765
+      task_id: ExecuteCommand
+      task_name: ExecuteCommand
+      workflow_execution_id: 61559d7dc553d9751089e3c8
+```
+The `result()` function is used within an action to capture output inside a variable for later processing.
+
+```yaml
+[ Text omitted ]
+    next:
+      - publish:
+          - outputtask1: <% result() %>
+[ Text omitted ]
+output:
+  - outputtask1: <% ctx(outputtask1) %>
+```
+
+Once you run this workflow action the output will look like following:
+
+```yaml
+outputtask1:
+      failed: false
+      return_code: 0
+      stderr: ''
+      stdout: Thu 30 Sep 2021 11:20:29 AM UTC
+      succeeded: true
+```

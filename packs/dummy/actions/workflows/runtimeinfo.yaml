@@ -1,0 +1,18 @@
+version: 1.0
+
+input:
+  - command
+
+tasks:
+  ExecuteCommand:
+    action: core.local
+    input:
+      cmd: <% ctx(command) %> #YAQL Syntax
+    next:
+      - publish:
+          - outputtask1: <% result() %>
+
+output:
+  - ctx: <% ctx() %>
+  - result: <% task(ExecuteCommand) %>
+  - outputtask1: <% ctx(outputtask1) %>
